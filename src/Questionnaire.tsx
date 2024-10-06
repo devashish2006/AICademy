@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 
 const questions = [
   "What's your programming experience level?",
-  "What areas of Python are you most interested in?",
+  "In which Tech are you most interested in?",
   "How much time can you dedicate to learning each day?",
 ];
 
