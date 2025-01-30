@@ -22,9 +22,6 @@ const LearningInterface = ({ userPreferences }) => {
         isCorrect={isCorrect}
       />
       <IDE
-        initialCode={modules[currentModule].task}
-        expectedOutput={modules[currentModule].expectedOutput}
-        onCorrectSubmission={() => setIsCorrect(true)}
       />
     </div>
   );
