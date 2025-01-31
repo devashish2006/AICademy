@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CourseContent from './CourseContent';
-import IDE from './IDE';
 import { modules } from './modules';
-
 const LearningInterface = ({ userPreferences }) => {
   const [currentModule, setCurrentModule] = useState(0);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -20,11 +18,6 @@ const LearningInterface = ({ userPreferences }) => {
         module={modules[currentModule]} // Triggers speech when this changes
         onNext={nextModule}
         isCorrect={isCorrect}
-      />
-      <IDE
-        initialCode={modules[currentModule].task}
-        expectedOutput={modules[currentModule].expectedOutput}
-        onCorrectSubmission={() => setIsCorrect(true)}
       />
     </div>
   );
