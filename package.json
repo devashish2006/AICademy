@@ -25,6 +25,7 @@
     "codemirror": "^5.65.18",
     "framer-motion": "^12.0.6",
     "lucide-react": "^0.447.0",
+    "monaco-editor": "^0.52.2",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-codemirror2": "^8.0.0",
