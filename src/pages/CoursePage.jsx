@@ -91,6 +91,7 @@ const CoursePage = () => {
   const [language, setLanguage] = useState('python'); // Default language is Python
   const [code, setCode] = useState(`# Write your code here`);
   const [output, setOutput] = useState('');
+  const [userInput, setUserInput] = useState(''); // Add this line here
   const clientId = '74798e2ee056ea928b05749fc628c946'; // JDoodle clientId
   const clientSecret = '7bcfff9a78bd246a996f57701e8ccdd9a4db6d734a0c02eb6f4e56c4638eedb'; // JDoodle clientSecret
 const [isExecuting, setIsExecuting] = useState(false);
@@ -111,56 +112,26 @@ const executeCode = async () => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   try {
-    // Add warnings for C/C++ code without main function
-    if ((language === 'cpp' || language === 'c') && !code.includes('main')) {
-      console.log(`Note: Adding main function wrapper for ${language.toUpperCase()} code`);
-    }
-
-    console.log('Sending code execution request:', {
-      language,
-      codeLength: code.length,
-      apiUrl: API_URL
-    });
-
     const response = await axios.post(`${API_URL}/api/execute`, {
       language,
-      code
+      code,
+      input: userInput  // Add the input to the request
     });
 
     if (response.data.error) {
-      if (response.data.cplusplus) {
-        // Special handling for C++ runtime errors
-        setOutput(response.data.output);
-        return;
-      }
       throw new Error(response.data.error);
-    }
-
-    // Handle compilation errors specifically
-    if (response.data.compilationError) {
-      setOutput(`Compilation Error: ${response.data.output}`);
-      return;
     }
 
     setOutput(response.data.output || 'Program executed successfully with no output');
   } catch (error) {
     console.error('Code execution error:', error);
-
-    if (error.code === 'ERR_NETWORK') {
-      setOutput(`Error: Unable to connect to the server at ${API_URL}. Please ensure the server is running.`);
-    } else {
-      const errorDetails = error.response?.data?.details || error.message;
-      setOutput(`Error: ${errorDetails}`);
-
-      // Add helpful hints for common C++ errors
-      if (language === 'cpp' && errorDetails.includes('undefined reference')) {
-        setOutput(prevOutput => `${prevOutput}\n\nHint: Make sure all functions are defined and you've included necessary headers.`);
-      }
-    }
+    const errorDetails = error.response?.data?.details || error.message;
+    setOutput(`Error: ${errorDetails}`);
   } finally {
     setIsExecuting(false);
   }
 };
+
 
   const handleQuestionnaireComplete = (preferences) => {
     setUserPreferences(preferences);
@@ -207,19 +178,49 @@ const executeCode = async () => {
                 className="border rounded p-2 w-full"
                 placeholder={`Write your ${language} code here`}
               />
+	      <div className="mt-4">
+      <label className="block text-sm font-medium mb-2">
+        Program Input (one value per line)
+      </label>
+    </div>
+	  <div className="mt-4 space-y-4">
+  <div>
+    <label htmlFor="code-input" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+      Program Input
+    </label>
+    <div className="mt-1">
+      <textarea
+        id="code-input"
+        rows={4}
+        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:border-gray-700"
+        placeholder="Enter your program's input here (one value per line)"
+        value={userInput}
+        onChange={(e) => setUserInput(e.target.value)}
+      />
+    </div>
+    <p className="mt-1 text-sm text-gray-500">
+      {language === 'cpp' && "For C++: Enter each input value on a new line"}
+      {language === 'python' && "For Python: Enter each input value on a new line"}
+      {language === 'c' && "For C: Enter each input value on a new line"}
+      {language === 'javascript' && "For JavaScript: Enter each input value on a new line"}
+    </p>
+  </div>
+</div>
+
+    <Button
+      onClick={executeCode}
+      className="mt-4"
+      disabled={isExecuting}
+    >
+      {isExecuting ? 'Running...' : 'Run Code'}
+    </Button>
+
+    <div className="output-box mt-4">
+      <h3>Output:</h3>
+      <pre>{output}</pre>
+    </div>
             </div>
 
-<Button 
-  onClick={executeCode} 
-  className="mt-4"
-  disabled={isExecuting}
->
-  {isExecuting ? 'Running...' : 'Run Code'}
-</Button>
-            <div className="output-box mt-4">
-              <h3>Output:</h3>
-              <pre>{output}</pre>
-            </div>
           </div>
         </main>
         <Footer />
