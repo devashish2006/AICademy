@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import CourseContent from './CourseContent';
 import { modules } from './modules';
-import IDE from './IDE'; // Include the IDE component from incoming changes
 
 const LearningInterface = ({ userPreferences }) => {
   const [currentModule, setCurrentModule] = useState(0);
@@ -21,9 +20,9 @@ const LearningInterface = ({ userPreferences }) => {
         onNext={nextModule}
         isCorrect={isCorrect}
       />
-      <IDE /> {/* Integrating the IDE component */}
     </div>
   );
 };
 
 export default LearningInterface;
+
