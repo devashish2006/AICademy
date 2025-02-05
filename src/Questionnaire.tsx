@@ -1,61 +1,130 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"; // Import ShadCN UI components
+import { useNavigate } from 'react-router-dom';
 
-const questions = [
-  "What's your programming experience level?",
-  "In which Tech are you most interested in?",
-  "How much time can you dedicate to learning each day?",
-];
+const CustomCard = ({ children }) => (
+  <div className="bg-gray-800/50 backdrop-blur-md rounded-xl p-8 border border-gray-700 shadow-2xl hover:shadow-indigo-500/20 transition-all duration-300">
+    {children}
+  </div>
+);
+
+const CustomButton = ({ onClick, children, disabled }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`w-full py-3 rounded-lg font-medium transition-all duration-300 
+      ${disabled 
+        ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+        : 'bg-indigo-600 text-white hover:bg-indigo-500 active:scale-95'}`}
+  >
+    {children}
+  </button>
+);
+
+const OptionButton = ({ selected, onClick, children }) => (
+  <button
+    onClick={onClick}
+    className={`w-full p-4 rounded-lg text-left transition-all duration-300 ${
+      selected 
+        ? 'bg-indigo-600 text-white' 
+        : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+    }`}
+  >
+    {children}
+  </button>
+);
 
 const Questionnaire = ({ onComplete }) => {
-  const [answers, setAnswers] = useState({});
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState({
+    experience: '',
+    tech: '',
+    timeCommitment: ''
+  });
 
-  const handleAnswerChange = (question, answer) => {
-    setAnswers({ ...answers, [question]: answer });
+  const questions = [
+    {
+      title: "What's your programming experience level?",
+      options: ['Beginner', 'Intermediate', 'Advanced'],
+      key: 'experience'
+    },
+    {
+      title: "In which Tech are you most interested in?",
+      options: ['Python', 'JavaScript', 'Java', 'C++', 'React'],
+      key: 'tech'
+    },
+    {
+      title: "How much time can you dedicate to learning each day?",
+      options: ['1-2 hours', '2-4 hours', '4+ hours'],
+      key: 'timeCommitment'
+    }
+  ];
+
+  const handleAnswer = (answer) => {
+    setAnswers({ ...answers, [questions[currentStep].key]: answer });
+    if (currentStep < questions.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const handleSubmit = () => {
     onComplete(answers);
+    navigate('/course');
   };
 
+  const isStepComplete = answers[questions[currentStep].key] !== '';
+  const isAllComplete = Object.values(answers).every(answer => answer !== '');
+
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Course Personalization</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {questions.map((question, index) => (
-          <div key={index} className="mb-4">
-            <label className="block mb-2">{question}</label>
-            {index === 1 ? ( // Check if the question is the second one
-              <Select
-                onValueChange={(value) => handleAnswerChange(question, value)}
-                value={answers[question] || ""}
-              >
-                <SelectTrigger className="w-full border border-gray-300 rounded-md">
-                  <SelectValue placeholder="Select an option" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Python">Python</SelectItem>
-                  <SelectItem value="C">C</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <CustomCard>
+        <div className="w-full max-w-3xl"> {/* Changed from max-w-md to max-w-3xl */}
+          <h2 className="text-2xl font-bold text-white mb-6">Course Personalization</h2>
+          
+          <div className="w-full h-2 bg-gray-700 rounded-full mb-8">
+            <div 
+              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+              style={{ width: `${((currentStep + 1) / questions.length) * 100}%` }}
+            />
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-xl text-white mb-4">{questions[currentStep].title}</h3>
+            <div className="grid grid-cols-2 gap-3"> {/* Changed from space-y-3 to grid */}
+              {questions[currentStep].options.map((option) => (
+                <OptionButton
+                  key={option}
+                  selected={answers[questions[currentStep].key] === option}
+                  onClick={() => handleAnswer(option)}
+                >
+                  {option}
+                </OptionButton>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-between space-x-4">
+            {currentStep > 0 && (
+              <CustomButton onClick={() => setCurrentStep(currentStep - 1)}>
+                Previous
+              </CustomButton>
+            )}
+            {currentStep === questions.length - 1 ? (
+              <CustomButton onClick={handleSubmit} disabled={!isAllComplete}>
+                Start Learning
+              </CustomButton>
             ) : (
-              <Input
-                type="text"
-                value={answers[question] || ''}
-                onChange={(e) => handleAnswerChange(question, e.target.value)}
-                className="w-full"
-              />
+              <CustomButton 
+                onClick={() => setCurrentStep(currentStep + 1)}
+                disabled={!isStepComplete}
+              >
+                Next
+              </CustomButton>
             )}
           </div>
-        ))}
-        <Button onClick={handleSubmit} className="w-full">Start Learning</Button>
-      </CardContent>
-    </Card>
+        </div>
+      </CustomCard>
+    </div>
   );
 };
 
