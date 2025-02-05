@@ -2,8 +2,17 @@ import React from "react"; // Import React to handle JSX
 import { motion } from "framer-motion";
 import { FaChalkboardTeacher, FaProjectDiagram, FaLightbulb } from "react-icons/fa";
 import { SiReact, SiJavascript, SiPython } from "react-icons/si";
+import { useNavigate } from "react-router-dom";
 
 function App() {
+
+
+  const navigate = useNavigate();
+
+  const handleGetStartedClick = () => {
+      // Redirect to login page
+      navigate('/login');  // Adjust the path if needed
+  };
   const Button = ({ children, variant = "filled", className = "", ...props }) => {
     const baseStyles =
       "px-6 py-3 rounded-lg font-medium focus:outline-none transition-all duration-200";
@@ -100,7 +109,7 @@ function App() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, delay: 0.6 }}
           >
-            <Button>Get Started</Button>
+            <Button onClick={handleGetStartedClick}>Get Started</Button>
             <Button variant="outline">Learn More</Button>
           </motion.div>
         </div>

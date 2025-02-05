@@ -1,19 +1,52 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader } from "@/components/ui/loader"; // Assuming you have a loader component
+import { Pause, Play, Volume2 } from 'lucide-react';
 
-// Replace with your actual Azure subscription key and region
-const AZURE_KEY = 'ca8468df636d4bfe92242083112d4880';
-const AZURE_REGION = 'eastus';
+const CustomCard = ({ children, className = '' }) => (
+  <div className={`bg-gray-800/50 backdrop-blur-md rounded-xl p-6 border border-gray-700 shadow-2xl hover:shadow-indigo-500/20 transition-all duration-300 ${className}`}>
+    {children}
+  </div>
+);
+
+const CustomButton = ({ children, onClick, disabled, className = '' }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 
+      ${disabled 
+        ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+        : 'bg-indigo-600 text-white hover:bg-indigo-500 active:transform active:scale-95'
+      } ${className}`}
+  >
+    {children}
+  </button>
+);
+
+const CustomSelect = ({ value, onChange, options }) => (
+  <select
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className="bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-2 w-[200px]
+      focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-300"
+  >
+    {options.map((option) => (
+      <option key={option.value} value={option.value}>
+        {option.label}
+      </option>
+    ))}
+  </select>
+);
+
+const LoadingSpinner = () => (
+  <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent" />
+);
 
 const CourseContent = ({ module, onNext, isCorrect }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Initially loading
-  const [selectedVoice, setSelectedVoice] = useState('en-US-AvaNeural'); // Set Ava as the default
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedVoice, setSelectedVoice] = useState('en-US-AvaNeural');
   const [voices, setVoices] = useState([]);
+  const [volume, setVolume] = useState(1);
 
   useEffect(() => {
     fetchVoices();
@@ -40,7 +73,7 @@ const CourseContent = ({ module, onNext, isCorrect }) => {
   };
 
   const generateSpeech = async () => {
-    setIsLoading(true); // Start loading when generating speech
+    setIsLoading(true);
     try {
       const response = await fetch(`https://${AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`, {
         method: 'POST',
@@ -58,9 +91,7 @@ const CourseContent = ({ module, onNext, isCorrect }) => {
         `
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate speech');
-      }
+      if (!response.ok) throw new Error('Failed to generate speech');
 
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -74,7 +105,7 @@ const CourseContent = ({ module, onNext, isCorrect }) => {
     } catch (error) {
       console.error('Error generating speech:', error);
     } finally {
-      setIsLoading(false); // Stop loading once speech is generated
+      setIsLoading(false);
     }
   };
 
@@ -89,61 +120,89 @@ const CourseContent = ({ module, onNext, isCorrect }) => {
     }
   };
 
-  const handleVoiceChange = (value) => {
-    setSelectedVoice(value);
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
   };
 
   if (!module) {
     return (
-      <Card className="w-full max-w-2xl">
-        <CardContent>
-          <p>No module content available. Please start the course or select a module.</p>
-        </CardContent>
-      </Card>
+      <CustomCard>
+        <p className="text-gray-400">No module content available. Please start the course or select a module.</p>
+      </CustomCard>
     );
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>{module.title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* Show loading message and hide the rest until the voice is processed */}
+    <CustomCard>
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">{module.title}</h2>
+        
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-64">
-            <Loader /> {/* Cool animation component */}
-            <p>Your personalized course is cooking...</p>
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
+            <LoadingSpinner />
+            <p className="text-indigo-400">Preparing your lesson...</p>
           </div>
         ) : (
           <>
-            <p className="whitespace-pre-wrap mb-4">{module.content}</p>
-            <div className="flex items-center space-x-4 mb-4">
-              <Select onValueChange={handleVoiceChange} value={selectedVoice}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select a voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voices.map((voice) => (
-                    <SelectItem key={voice.ShortName} value={voice.ShortName}>
-                      {voice.DisplayName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={togglePlayPause} disabled={isLoading}>
-                {isPlaying ? 'Pause' : 'Play'}
-              </Button>
+            <div className="prose prose-invert max-w-none">
+              <p className="text-gray-300 leading-relaxed">{module.content}</p>
             </div>
 
-            <audio ref={audioRef} onEnded={() => setIsPlaying(false)} />
-            <Button onClick={onNext} disabled={!isCorrect}>
-              Next Module
-            </Button>
+            <div className="bg-gray-700/50 rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <CustomButton onClick={togglePlayPause} className="w-12 h-12 p-0 flex items-center justify-center">
+                    {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                  </CustomButton>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Volume2 size={20} className="text-gray-400" />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={volume}
+                      onChange={handleVolumeChange}
+                      className="w-24 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <CustomSelect
+                  value={selectedVoice}
+                  onChange={setSelectedVoice}
+                  options={voices.map(voice => ({
+                    value: voice.ShortName,
+                    label: voice.DisplayName
+                  }))}
+                />
+              </div>
+
+              <audio
+                ref={audioRef}
+                onEnded={() => setIsPlaying(false)}
+                className="hidden"
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <CustomButton
+                onClick={onNext}
+                disabled={!isCorrect}
+                className="min-w-[120px]"
+              >
+                Next Module
+              </CustomButton>
+            </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </CustomCard>
   );
 };
 

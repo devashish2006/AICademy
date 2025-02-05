@@ -1,44 +1,55 @@
-import React from "react"; // Import React to handle JSX
+import React, { useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 
 function SignUpPage() {
-  const Button = ({ children, variant = "filled", className = "", ...props }) => {
-    const baseStyles =
-      "px-6 py-3 rounded-lg font-medium focus:outline-none transition-all duration-200";
-    const filledStyles =
-      "bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg";
-    const outlineStyles =
-      "border border-indigo-500 text-indigo-500 hover:bg-indigo-500 hover:text-white";
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-    return (
-      <button
-        className={`${baseStyles} ${
-          variant === "filled" ? filledStyles : outlineStyles
-        } ${className}`}
-        {...props}
-      >
-        {children}
-      </button>
-    );
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:3000/api/v1/auth/signup", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      setSuccess("Signup successful! Redirecting...");
+      setError(null);
+
+      // Store token (optional)
+      localStorage.setItem("token", response.data.token);
+
+      // Redirect user after signup (optional)
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+    } catch (error) {
+      setError(error.response?.data?.message || "Signup failed");
+    }
   };
 
   return (
     <>
-      {/* Signup Section */}
       <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col items-center justify-center overflow-hidden">
-        {/* Background Animation */}
-        <motion.div
-          className="absolute inset-0 z-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        >
-          <div className="absolute w-full h-full opacity-10 bg-gradient-to-t from-gray-700 via-gray-800 to-gray-900"></div>
-          <div className="absolute w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full blur-3xl opacity-30 animate-spin-slow"></div>
-          <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-gradient-to-br from-blue-500 to-green-500 rounded-full blur-2xl opacity-20 animate-pulse"></div>
-        </motion.div>
-
-        {/* Signup Form */}
         <div className="z-10 text-center max-w-md bg-gray-800 p-8 rounded-lg shadow-lg">
           <motion.h1
             className="text-3xl font-extrabold tracking-wide text-indigo-400"
@@ -57,67 +68,59 @@ function SignUpPage() {
             Create an account to access exclusive features.
           </motion.p>
 
-          <form className="mt-6 space-y-4">
-            {/* Name Field */}
-            <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 1, delay: 0.6 }}
-            >
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-              />
-            </motion.div>
+          {error && <p className="text-red-500 mt-2">{error}</p>}
+          {success && <p className="text-green-500 mt-2">{success}</p>}
 
-            {/* Email Field */}
-            <motion.div
-              initial={{ x: 50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 1, delay: 0.8 }}
-            >
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-              />
-            </motion.div>
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            />
 
-            {/* Password Field */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 1, delay: 1 }}
-            >
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-              />
-            </motion.div>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            />
 
-            {/* Confirm Password Field */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 1, delay: 1.2 }}
-            >
-              <input
-                type="password"
-                placeholder="Confirm Password"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-              />
-            </motion.div>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            />
 
-            {/* Signup Button */}
-            <motion.div
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+            />
+
+            <motion.button
+              type="submit"
+              className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-500 shadow-lg"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 1, delay: 1.4 }}
             >
-              <Button>Sign Up</Button>
-            </motion.div>
+              Sign Up
+            </motion.button>
           </form>
 
           <p className="mt-4 text-sm text-gray-400">
@@ -129,13 +132,8 @@ function SignUpPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-gray-400 py-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm">
-            © {new Date().getFullYear()} AiCademy. All rights reserved.
-          </p>
-        </div>
+      <footer className="bg-gray-800 text-gray-400 py-8 text-center">
+        <p className="text-sm">© {new Date().getFullYear()} AiCademy. All rights reserved.</p>
       </footer>
     </>
   );
